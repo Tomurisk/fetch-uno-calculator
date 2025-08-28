@@ -1,39 +1,41 @@
-name: Extract and Release Uno Calculator Snap
+name: Create Release for Uno Calculator Snap
 
 on:
   push:
     tags:
-      - 'v*'  # Triggers on version tags like v1.0.0
+      - 'v*' # Triggers on tags like v1.0.0, v2.1.3, etc.
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Required for creating and uploading releases
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install Snapd and Uno Calculator
-        run: |
-          sudo apt update
-          sudo apt install snapd -y
-          sudo snap install uno-calculator
+    - name: Install Snapd and Uno Calculator
+      run: |
+        sudo apt update
+        sudo apt install snapd -y
+        sudo snap install uno-calculator
 
-      - name: Locate and Copy Snap File
-        run: |
-          SNAP_FILE=$(ls /var/lib/snapd/snaps | grep uno-calculator | head -n 1)
-          echo "Found snap file: $SNAP_FILE"
-          sudo cp /var/lib/snapd/snaps/$SNAP_FILE ./uno-calculator.snap
-          sudo chown $USER:$USER ./uno-calculator.snap
+    - name: Locate and Copy Snap File
+      run: |
+        SNAP_FILE=$(ls /var/lib/snapd/snaps | grep uno-calculator | head -n 1)
+        echo "Found snap file: $SNAP_FILE"
+        sudo cp /var/lib/snapd/snaps/$SNAP_FILE ./uno-calculator.snap
+        sudo chown $USER:$USER ./uno-calculator.snap
 
-      - name: Create Release zip
-        run: |
-          zip -r Release.zip uno-calculator.snap
+    - name: Create Release zip
+      run: |
+        zip -r Release.zip uno-calculator.snap
 
-      - name: Create GitHub Release using GitHub CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release create ${{ github.ref_name }} Release.zip \
-            --title "Version ${{ github.ref_name }}" \
-            --generate-notes
-
+    - name: Create GitHub Release using GitHub CLI
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh release create ${{ github.ref_name }} Release.zip \
+          --title "Uno Calculator Extracted ${{ github.ref_name }}" \
+          --notes "This release contains the extracted Uno Calculator snap file."
