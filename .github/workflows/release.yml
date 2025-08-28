@@ -23,6 +23,7 @@ jobs:
           SNAP_FILE=$(ls /var/lib/snapd/snaps | grep uno-calculator | head -n 1)
           echo "Found snap file: $SNAP_FILE"
           sudo cp /var/lib/snapd/snaps/$SNAP_FILE ./uno-calculator.snap
+          sudo chown $USER:$USER ./uno-calculator.snap
 
       - name: Create Release zip
         run: |
