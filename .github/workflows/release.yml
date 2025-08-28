@@ -1,28 +1,33 @@
-name: Fetch Uno Calculator Snap
+name: Install and Extract Uno Calculator Snap
 
 on:
   workflow_dispatch:
 
 jobs:
-  fetch-snap:
+  extract-snap:
     runs-on: ubuntu-latest
     steps:
-      - name: Install squashfs-tools
-        run: sudo apt update && sudo apt install -y squashfs-tools
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Download Uno Calculator Snap
+      - name: Install Snapd and Uno Calculator
         run: |
-          snap download uno-calculator
-          mkdir extracted
-          unsquashfs -d extracted uno-calculator.snap
+          sudo apt update
+          sudo apt install snapd -y
+          sudo snap install uno-calculator
 
-      - name: Zip extracted contents
-        run: zip -r Release.zip extracted/
-
-      - name: Create GitHub Release using GitHub CLI
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Locate and Copy Snap File
         run: |
-          gh release create uno-calculator-release Release.zip \
-            --title "Uno Calculator Extracted" \
-            --notes "This release contains the extracted contents of the Uno Calculator Snap package."
+          SNAP_FILE=$(ls /var/lib/snapd/snaps | grep uno-calculator | head -n 1)
+          echo "Found snap file: $SNAP_FILE"
+          sudo cp /var/lib/snapd/snaps/$SNAP_FILE ./
+          echo "Snap file copied to workspace."
+
+      - name: List Workspace Contents
+        run: ls -lh
+
+      - name: Upload Snap Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: uno-calculator-snap
+          path: uno-calculator_*.snap
