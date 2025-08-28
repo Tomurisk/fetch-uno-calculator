@@ -1,10 +1,12 @@
-name: Install and Extract Uno Calculator Snap
+name: Extract and Release Uno Calculator Snap
 
 on:
-  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v1.0.0
 
 jobs:
-  extract-snap:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,14 +22,16 @@ jobs:
         run: |
           SNAP_FILE=$(ls /var/lib/snapd/snaps | grep uno-calculator | head -n 1)
           echo "Found snap file: $SNAP_FILE"
-          sudo cp /var/lib/snapd/snaps/$SNAP_FILE ./
-          echo "Snap file copied to workspace."
+          sudo cp /var/lib/snapd/snaps/$SNAP_FILE ./uno-calculator.snap
 
-      - name: List Workspace Contents
-        run: ls -lh
+      - name: Create Release zip
+        run: |
+          zip -r Release.zip uno-calculator.snap
 
-      - name: Upload Snap Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: uno-calculator-snap
-          path: uno-calculator_*.snap
+      - name: Create GitHub Release using GitHub CLI
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create ${{ github.ref_name }} Release.zip \
+            --title "Version ${{ github.ref_name }}" \
+            --generate-notes
